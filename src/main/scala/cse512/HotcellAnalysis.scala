@@ -35,10 +35,10 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   pickupInfo.show()
 
   // Define the min and max of x, y, z
-  val minX = -74.50/HotcellUtils.coordinateStep
-  val maxX = -73.70/HotcellUtils.coordinateStep
-  val minY = 40.50/HotcellUtils.coordinateStep
-  val maxY = 40.90/HotcellUtils.coordinateStep
+  val minX = (-74.50/HotcellUtils.coordinateStep).toInt
+  val maxX = (-73.70/HotcellUtils.coordinateStep).toInt
+  val minY = (40.50/HotcellUtils.coordinateStep).toInt
+  val maxY = (40.90/HotcellUtils.coordinateStep).toInt
   val minZ = 1
   val maxZ = 31
   val numCells = (maxX - minX + 1)*(maxY - minY + 1)*(maxZ - minZ + 1)
@@ -51,8 +51,6 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
   var x = minX.toInt
   var y = minY.toInt
-
-  val step = HotcellUtils.coordinateStep
 
   val rectangles = scala.collection.mutable.ListBuffer.empty[String]
 
@@ -91,10 +89,13 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
   //now for the calculations ... things are about to get messy .. hahahaha
 
+  // :/ now looks like I will have to take care of the edge cases as well .. hahahaha that's a real bummer ..
+
   zone_counts_by_day.createOrReplaceTempView("my_data")
   val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
 
   val finalMap = finalDF.select($"ID", $"sum".cast("int")).as[(String, Int)].collect.toMap
+  var finalMap_ = Map("test" -> 0.0)
 
   for (i <- 0 until rectangles.length){
     for (d <- 1 to 31) {
@@ -144,11 +145,56 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
       x_ += (finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + (d+1).toString, 0)).toString.toInt
 
       var sum = 0
+      var sum_2 = 0
       x_.foreach( sum += _ )
-      print(sum.toString + ", ")
+
+      var b=0
+      while (b < x_.length) {
+        sum_2 += x_(b)*x_(b)
+        b += 1
+      }
+
+      //there are a couple of edge cases to be dealt with
+      //from the looks of things ... that will only be needed for the formula
+      var n = 0
+      if (x1 == minX || x1 == maxX || y1 == minY || y1 == maxY || d == 1 || d == 31){
+        //there 8 cases for the cubes at the corners with 8 neighbors
+        if (x1 == maxX & y1 == minY){
+          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
+        }
+
+        if (x1 == maxX & y1 == maxY){
+          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
+        }
+
+        if (x1 == minX & y1 == minY){
+          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
+        }
+
+        if (x1 == minX & y1 == maxY){
+          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
+        }
+
+        //the rest of the cubes at the edges
+      } else {
+        n = 27
+      }
+
+
+      //now that we have n .. lets calculate those values
+      //n, sum, sum_2
+      val x_bar = sum/n
+      val s = Math.sqrt(sum_2/n - x_bar*x_bar)
+
+      val G = (sum - x_bar*n)/(s * Math.sqrt((n*n - n*n)/(n - 1)))
+
+      finalMap_ += (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString -> G)
+
     }
   }
 
-  return zone_counts_by_day.coalesce(1) // YOU NEED TO CHANGE THIS PART
+  val df_to_return  = finalMap_.toSeq.toDF("rectangle", "Gscore")
+
+  return df_to_return.sort($"Gscore".desc).coalesce(1) // YOU NEED TO CHANGE THIS PART
 }
 }
