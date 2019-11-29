@@ -108,41 +108,40 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
       val y2 = rec_cood(3).toInt
 
       x_ += (finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString, 0)).toString.toInt
-      x_ += finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + (d+1).toString, 0)).toString.toInt
 
-      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + d.toString, 0)
-      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + (d-1).toString, 0)
-      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + (d+1).toString, 0)
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + d.toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + (d-1).toString, 0)).toString.toInt
+      x_ += (finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + (d+1).toString, 0)).toString.toInt
 
       var sum = 0
       x_.foreach( sum += _ )
