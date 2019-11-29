@@ -89,6 +89,8 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   //think for speed we need to convert to a map .. then we query from there .. df.filter simply is not making the cut..
   //df.select($"name", $"age".cast("int")).as[(String, Int)].collect.toMap
 
+  //now for the calculations ... things are about to get messy .. hahahaha
+
   zone_counts_by_day.createOrReplaceTempView("my_data")
   val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
 
@@ -105,63 +107,42 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
       val x2 = rec_cood(2).toInt
       val y2 = rec_cood(3).toInt
 
+      x_ += finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + (d+1).toString, 0)
 
-    }
-  }
+      x_ += finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString + "," + (d+1).toString, 0)
 
+      x_ += finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString + "," + (d+1).toString, 0)
 
+      x_ += finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString + "," + (d+1).toString, 0)
 
+      x_ += finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString + "," + (d+1).toString, 0)
 
-  //now for the calculations ... things are about to get messy .. hahahaha
-  var x_bar = 0
+      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString + "," + (d+1).toString, 0)
 
-  for (i <- 0 until rectangles.length){
-    for (d <- 1 to 31){
-      x = 0
-      val x_ = scala.collection.mutable.ListBuffer.empty[Integer]
+      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString + "," + (d+1).toString, 0)
 
-      val rec_cood = rectangles(i).split(",")
+      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString + "," + (d+1).toString, 0)
 
-      val x1 = rec_cood(0).toInt
-      val y1 = rec_cood(1).toInt
-      val x2 = rec_cood(2).toInt
-      val y2 = rec_cood(3).toInt
-
-      if (!zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString) and $"z" === d).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + y1.toString + "," + (x2-1).toString + "," + y2.toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + y1.toString + "," + (x2+1).toString + "," + y2.toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1-1).toString + "," + x2.toString + "," + (y2-1).toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === (x1.toString + "," + (y1+1).toString + "," + x2.toString + "," + (y2+1).toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1-1).toString + "," + (x2-1).toString + "," + (y2-1).toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1-1).toString + "," + (y1+1).toString + "," + (x2-1).toString + "," + (y2+1).toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1-1).toString + "," + (x2+1).toString + "," + (y2-1).toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
-
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString) and $"z" === d)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString) and $"z" === d).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString) and $"z" === d-1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString) and $"z" === d-1).collect()(0)(1).toString.toInt}
-      if(!(zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString) and $"z" === d+1)).rdd.isEmpty){ x_ += zone_counts_by_day.filter($"rectangle" === ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString) and $"z" === d+1).collect()(0)(1).toString.toInt}
+      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + d.toString, 0)
+      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + (d-1).toString, 0)
+      x_ += finalMap getOrElse ((x1+1).toString + "," + (y1+1).toString + "," + (x2+1).toString + "," + (y2+1).toString + "," + (d+1).toString, 0)
 
       var sum = 0
       x_.foreach( sum += _ )
