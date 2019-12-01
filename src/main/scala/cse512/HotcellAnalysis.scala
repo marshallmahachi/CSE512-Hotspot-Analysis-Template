@@ -43,14 +43,6 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   val maxZ = 31
   val numCells = (maxX - minX + 1)*(maxY - minY + 1)*(maxZ - minZ + 1)
 
-  //println("total number of cells : ", numCells)
-
-  // YOU NEED TO CHANGE THIS PART
-
-  //we could get the list of rectangles .. then query with a group by date .. :)
-  //this will give us the xi's
-  //then will see how to go from there ..
-
   var x = minX.toInt
   var y = minY.toInt
 
@@ -65,10 +57,6 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
     x += 1
   }
 
-  //println("number of rectangles :", rectangles.length)
-
-  //now we have all the rectangles.
-  //now creating the rectangle view then creating a view ..
   val df = rectangles.toDF("rectangle")
 
   //pickupInfo x, y, z
@@ -76,52 +64,31 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
 
   val pickUps = spark.sql("select *, concat(x, ',', y) as point from pickups") //creating the point column from x & y
-//  println("Length of pickups :", pickUps.count())
   pickUps.createOrReplaceTempView("points")
 
   df.createOrReplaceTempView("rectangles")
 
   spark.udf.register("ST_Contains",(queryRectangle:String, pointString:String)=>(HotcellUtils.ST_Contains(queryRectangle, pointString)))
   val joinDf = spark.sql("select rectangles.rectangle as rectangle, points.point as point, points.z as z from rectangles, points where ST_Contains(rectangles.rectangle,points.point)")
-//  println("Length of joinDF : ", joinDf.count())
+
 
   joinDf.createOrReplaceTempView("joinResult")
   val zone_counts_by_day = spark.sql("select rectangle, count(point) as sum, z from joinResult group by rectangle, z order by rectangle")
 
 
-//  println("Printing pickups by cell and day: ")
-//  zone_counts_by_day.show()
-
-  //think for speed we need to convert to a map .. then we query from there .. df.filter simply is not making the cut..
-  //df.select($"name", $"age".cast("int")).as[(String, Int)].collect.toMap
-
-  //now for the calculations ... things are about to get messy .. hahahaha
-
-  // :/ now looks like I will have to take care of the edge cases as well .. hahahaha that's a real bummer ..
-
   zone_counts_by_day.createOrReplaceTempView("my_data")
   val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
 
-
-//  println("The final DF to be converted to the Hash :")
-//  finalDF.show()
-
-//  println("starting MAP conversion")
   val finalMap = finalDF.select($"ID", $"sum".cast("int")).as[(String, Int)].collect.toMap
 
-//  println(finalMap)
-
-  //now to calculate the mean and the standard deviation
 
   val sum_x = finalMap.values.sum.toDouble
 
   val x_bar = sum_x / numCells
   val s = Math.sqrt((finalMap.values.map(Math.pow(_, 2)).sum)/numCells - x_bar*x_bar)
 
-//  println("the mean and sd: ", sum_x, x_bar, s)
 
-  //ok; so now we have the mean and the sd right ..
-
+  implicit def bool2int(b:Boolean) = if (b) 1 else 0
 
   var finalMap_ = Map("test" -> 0.0)
 //
@@ -175,12 +142,7 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
       var sum = 0
       x_.foreach( sum += _ )
 
-
-      //there are a couple of edge cases to be dealt with
-      //from the looks of things ... that will only be needed for the formula
       var n = 27
-
-      implicit def bool2int(b:Boolean) = if (b) 1 else 0
 
 
       if (x1 == minX || x1 == maxX || y1 == minY || y1 == maxY || d == 1 || d == 31){
@@ -192,13 +154,8 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
       }
 
-
-      //now that we have n .. lets calculate those values
-      //n, sum, sum_2
-
       val G = (sum - x_bar*n)/(s * Math.sqrt((numCells*n - n*n)/(numCells - 1)))
 
-//      finalMap_ += (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString -> G)
       finalMap_ += (x1.toString + "," + y1.toString + "," + d.toString -> G)
 
     }
@@ -208,6 +165,6 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   df_to_return = df_to_return.withColumn("temp", split(col("rectangle"), ",")).select(
     col("*") +: (0 until 5).map(i => col("temp").getItem(i).as(s"col$i")): _*)
 
-  return df_to_return.sort($"Gscore".desc).select("col0", "col1", "col2") // YOU NEED TO CHANGE THIS PART
+  return df_to_return.sort($"Gscore".desc, $"col0", $"col1").select("col0", "col1", "col2") // YOU NEED TO CHANGE THIS PART
 }
 }
