@@ -102,11 +102,21 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   zone_counts_by_day.createOrReplaceTempView("my_data")
   val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
 
+
   println("The final DF to be converted to the Hash :")
   finalDF.show()
 
-//  val finalMap = finalDF.select($"ID", $"sum".cast("int")).as[(String, Int)].collect.toMap
-//  var finalMap_ = Map("test" -> 0.0)
+  val finalMap = finalDF.select($"ID", $"sum".cast("int")).as[(String, Int)].collect.toMap
+
+  //now to calculate the mean and the standard deviation
+  val x_bar = finalMap.foldLeft(0)(_+_._2) / numCells
+  val s = Math.sqrt((finalMap.values.map(Math.pow(_, 2)).sum)/numCells - x_bar*x_bar)
+
+  println("the mean and sd: ", x_bar, s)
+
+
+
+  var finalMap_ = Map("test" -> 0.0)
 //
 //  for (i <- 0 until rectangles.length){
 //    for (d <- 1 to 31) {
