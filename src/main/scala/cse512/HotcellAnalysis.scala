@@ -165,6 +165,6 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   df_to_return = df_to_return.withColumn("temp", split(col("rectangle"), ",")).select(
     col("*") +: (0 until 5).map(i => col("temp").getItem(i).as(s"col$i")): _*)
 
-  return df_to_return.sort($"Gscore".desc, $"col0", $"col1").select("col0", "col1", "col2") // YOU NEED TO CHANGE THIS PART
+  return df_to_return.sort($"Gscore".desc, $"col0", $"col1", $"col2").select("col0", "col1", "col2") // YOU NEED TO CHANGE THIS PART
 }
 }
