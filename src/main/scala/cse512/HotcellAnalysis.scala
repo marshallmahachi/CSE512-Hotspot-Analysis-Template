@@ -43,6 +43,8 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   val maxZ = 31
   val numCells = (maxX - minX + 1)*(maxY - minY + 1)*(maxZ - minZ + 1)
 
+  println("total number of cells : ", numCells)
+
   // YOU NEED TO CHANGE THIS PART
 
   //we could get the list of rectangles .. then query with a group by date .. :)
@@ -63,6 +65,8 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
     x += 1
   }
 
+  println("number of rectangles :", rectangles.length)
+
   //now we have all the rectangles.
   //now creating the rectangle view then creating a view ..
   val df = rectangles.toDF("rectangle")
@@ -70,19 +74,22 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   //pickupInfo x, y, z
   pickupInfo.createOrReplaceTempView("pickups")
 
+
   val pickUps = spark.sql("select *, concat(x, ',', y) as point from pickups") //creating the point column from x & y
+  println("Length of pickups :", pickUps.count())
   pickUps.createOrReplaceTempView("points")
 
   df.createOrReplaceTempView("rectangles")
 
   spark.udf.register("ST_Contains",(queryRectangle:String, pointString:String)=>(HotzoneUtils.ST_Contains(queryRectangle, pointString)))
   val joinDf = spark.sql("select rectangles.rectangle as rectangle, points.point as point, points.z as z from rectangles, points where ST_Contains(rectangles.rectangle,points.point)")
+  println("Length of joinDF : ", joinDf.count())
 
-  joinDf.createOrReplaceTempView("joinResult")
-  val zone_counts_by_day = spark.sql("select rectangle, count(point) as sum, z from joinResult group by rectangle, z order by rectangle")
-
-  println("printing zone_counts_by_day")
-  zone_counts_by_day.show()
+//  joinDf.createOrReplaceTempView("joinResult")
+//  val zone_counts_by_day = spark.sql("select rectangle, count(point) as sum, z from joinResult group by rectangle, z order by rectangle")
+//
+//  println("printing zone_counts_by_day")
+//  zone_counts_by_day.show()
 
   //think for speed we need to convert to a map .. then we query from there .. df.filter simply is not making the cut..
   //df.select($"name", $"age".cast("int")).as[(String, Int)].collect.toMap
@@ -91,8 +98,8 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
   // :/ now looks like I will have to take care of the edge cases as well .. hahahaha that's a real bummer ..
 
-  zone_counts_by_day.createOrReplaceTempView("my_data")
-  val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
+//  zone_counts_by_day.createOrReplaceTempView("my_data")
+//  val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
 
 //  val finalMap = finalDF.select($"ID", $"sum".cast("int")).as[(String, Int)].collect.toMap
 //  var finalMap_ = Map("test" -> 0.0)
