@@ -88,6 +88,8 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   joinDf.createOrReplaceTempView("joinResult")
   val zone_counts_by_day = spark.sql("select rectangle, count(point) as sum, z from joinResult group by rectangle, z order by rectangle")
 
+
+  println("Printing pickups by cell and day: ")
   zone_counts_by_day.show()
 
   //think for speed we need to convert to a map .. then we query from there .. df.filter simply is not making the cut..
@@ -97,8 +99,11 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
   // :/ now looks like I will have to take care of the edge cases as well .. hahahaha that's a real bummer ..
 
-//  zone_counts_by_day.createOrReplaceTempView("my_data")
-//  val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
+  zone_counts_by_day.createOrReplaceTempView("my_data")
+  val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
+
+  println("The final DF to be converted to the Hash :")
+  finalDF.show()
 
 //  val finalMap = finalDF.select($"ID", $"sum".cast("int")).as[(String, Int)].collect.toMap
 //  var finalMap_ = Map("test" -> 0.0)
@@ -202,6 +207,6 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 //  val df_to_return  = finalMap_.toSeq.toDF("rectangle", "Gscore")
 
 //  return joinDf.sort($"Gscore".desc).coalesce(1) // YOU NEED TO CHANGE THIS PART
-  return joinDf
+  return finalDF
 }
 }
