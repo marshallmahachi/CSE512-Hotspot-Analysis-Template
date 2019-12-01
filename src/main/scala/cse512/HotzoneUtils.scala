@@ -40,7 +40,7 @@ object HotzoneUtils {
     }
 
     //then run the condition now
-    if (point_x >= lower_bound_x && point_x < upper_bound_x && point_y >= lower_bound_y && point_y < upper_bound_y){
+    if (point_x >= lower_bound_x && point_x <= upper_bound_x && point_y >= lower_bound_y && point_y <= upper_bound_y){
       returnBool = true
     }
 

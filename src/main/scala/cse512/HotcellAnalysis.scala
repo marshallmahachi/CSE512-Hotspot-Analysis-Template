@@ -43,7 +43,7 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   val maxZ = 31
   val numCells = (maxX - minX + 1)*(maxY - minY + 1)*(maxZ - minZ + 1)
 
-  println("total number of cells : ", numCells)
+  //println("total number of cells : ", numCells)
 
   // YOU NEED TO CHANGE THIS PART
 
@@ -65,7 +65,7 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
     x += 1
   }
 
-  println("number of rectangles :", rectangles.length)
+  //println("number of rectangles :", rectangles.length)
 
   //now we have all the rectangles.
   //now creating the rectangle view then creating a view ..
@@ -76,21 +76,21 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
 
   val pickUps = spark.sql("select *, concat(x, ',', y) as point from pickups") //creating the point column from x & y
-  println("Length of pickups :", pickUps.count())
+//  println("Length of pickups :", pickUps.count())
   pickUps.createOrReplaceTempView("points")
 
   df.createOrReplaceTempView("rectangles")
 
-  spark.udf.register("ST_Contains",(queryRectangle:String, pointString:String)=>(HotzoneUtils.ST_Contains(queryRectangle, pointString)))
+  spark.udf.register("ST_Contains",(queryRectangle:String, pointString:String)=>(HotcellUtils.ST_Contains(queryRectangle, pointString)))
   val joinDf = spark.sql("select rectangles.rectangle as rectangle, points.point as point, points.z as z from rectangles, points where ST_Contains(rectangles.rectangle,points.point)")
-  println("Length of joinDF : ", joinDf.count())
+//  println("Length of joinDF : ", joinDf.count())
 
   joinDf.createOrReplaceTempView("joinResult")
   val zone_counts_by_day = spark.sql("select rectangle, count(point) as sum, z from joinResult group by rectangle, z order by rectangle")
 
 
-  println("Printing pickups by cell and day: ")
-  zone_counts_by_day.show()
+//  println("Printing pickups by cell and day: ")
+//  zone_counts_by_day.show()
 
   //think for speed we need to convert to a map .. then we query from there .. df.filter simply is not making the cut..
   //df.select($"name", $"age".cast("int")).as[(String, Int)].collect.toMap
@@ -103,13 +103,13 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   val finalDF = spark.sql("select *, concat(rectangle, ',', z) as ID from my_data")
 
 
-  println("The final DF to be converted to the Hash :")
-  finalDF.show()
+//  println("The final DF to be converted to the Hash :")
+//  finalDF.show()
 
-  println("starting MAP conversion")
+//  println("starting MAP conversion")
   val finalMap = finalDF.select($"ID", $"sum".cast("int")).as[(String, Int)].collect.toMap
 
-  println(finalMap)
+//  println(finalMap)
 
   //now to calculate the mean and the standard deviation
 
@@ -118,7 +118,7 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   val x_bar = sum_x / numCells
   val s = Math.sqrt((finalMap.values.map(Math.pow(_, 2)).sum)/numCells - x_bar*x_bar)
 
-  println("the mean and sd: ", sum_x, x_bar, s)
+//  println("the mean and sd: ", sum_x, x_bar, s)
 
   //ok; so now we have the mean and the sd right ..
 
@@ -179,28 +179,18 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
       //there are a couple of edge cases to be dealt with
       //from the looks of things ... that will only be needed for the formula
       var n = 27
-//      if (x1 == minX || x1 == maxX || y1 == minY || y1 == maxY || d == 1 || d == 31){
-//        //there 8 cases for the cubes at the corners with 8 neighbors
-//        if (x1 == maxX & y1 == minY){
-//          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
-//        }
-//
-//        if (x1 == maxX & y1 == maxY){
-//          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
-//        }
-//
-//        if (x1 == minX & y1 == minY){
-//          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
-//        }
-//
-//        if (x1 == minX & y1 == maxY){
-//          if(d == 1 || d == 31){ n = 8 } else { n = 12 }
-//        }
-//
-//        //the rest of the cubes at the edges
-//      } else {
-//        n = 27
-//      }
+
+      implicit def bool2int(b:Boolean) = if (b) 1 else 0
+
+
+      if (x1 == minX || x1 == maxX || y1 == minY || y1 == maxY || d == 1 || d == 31){
+        val sum_n = !(x1%minX == 0) + !(x1%maxX == 0) + !(y1%minY == 0) + (y1%maxY == 0) + (d == 1 || d == 31)
+
+        if (sum_n == 1){ n = 18}
+        if (sum_n == 2){ n = 12}
+        if (sum_n == 3){ n = 8}
+
+      }
 
 
       //now that we have n .. lets calculate those values
@@ -208,14 +198,16 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
 
       val G = (sum - x_bar*n)/(s * Math.sqrt((numCells*n - n*n)/(numCells - 1)))
 
-      finalMap_ += (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString -> G)
+//      finalMap_ += (x1.toString + "," + y1.toString + "," + x2.toString + "," + y2.toString + "," + d.toString -> G)
+      finalMap_ += (x1.toString + "," + y1.toString + "," + d.toString -> G)
 
     }
   }
-//
-//  val df_to_return  = finalMap_.toSeq.toDF("rectangle", "Gscore")
+  var df_to_return  = finalMap_.toSeq.toDF("rectangle", "Gscore")
 
-//  return joinDf.sort($"Gscore".desc).coalesce(1) // YOU NEED TO CHANGE THIS PART
-  return finalDF
+  df_to_return = df_to_return.withColumn("temp", split(col("rectangle"), ",")).select(
+    col("*") +: (0 until 5).map(i => col("temp").getItem(i).as(s"col$i")): _*)
+
+  return df_to_return.sort($"Gscore".desc).select("col0", "col1", "col2") // YOU NEED TO CHANGE THIS PART
 }
 }
