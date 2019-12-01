@@ -85,11 +85,10 @@ def runHotcellAnalysis(spark: SparkSession, pointPath: String): DataFrame =
   val joinDf = spark.sql("select rectangles.rectangle as rectangle, points.point as point, points.z as z from rectangles, points where ST_Contains(rectangles.rectangle,points.point)")
   println("Length of joinDF : ", joinDf.count())
 
-//  joinDf.createOrReplaceTempView("joinResult")
-//  val zone_counts_by_day = spark.sql("select rectangle, count(point) as sum, z from joinResult group by rectangle, z order by rectangle")
-//
-//  println("printing zone_counts_by_day")
-//  zone_counts_by_day.show()
+  joinDf.createOrReplaceTempView("joinResult")
+  val zone_counts_by_day = spark.sql("select rectangle, count(point) as sum, z from joinResult group by rectangle, z order by rectangle")
+
+  zone_counts_by_day.show()
 
   //think for speed we need to convert to a map .. then we query from there .. df.filter simply is not making the cut..
   //df.select($"name", $"age".cast("int")).as[(String, Int)].collect.toMap

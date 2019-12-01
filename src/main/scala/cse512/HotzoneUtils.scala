@@ -46,7 +46,5 @@ object HotzoneUtils {
 
     returnBool
   }
-
   // YOU NEED TO CHANGE THIS PART
-
 }
